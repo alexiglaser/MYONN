@@ -1,0 +1,208 @@
+---
+title: "part2_neural_network_mnist_data"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook replicating the Python notebooks for Make Your Own Neural Network
+working with the MNIST data set
+
+(c) Alex Glaser, 2017
+license is GPLv2
+
+As a quick aside we shall use the assigment operator "<-" instead of "=" throughout the code. There appears to be some confusion about why this is used instead of equals, which is beyond the scope of this work, simply put most of the time they are interchangeable. The reasons for this code being written with the assigment operator are purely personal.
+
+```{r}
+# A class in R is slightly different to those seen in Python (or other OO programming languages). 
+# Instead we shall set up a function which initialises a neural network
+neuralnetwork <- function(inputnodes, hiddennodes, outputnodes, learningrate){
+  # Create a null variable called `self`. Normally 'self' (or 'this') is not used in R code, but used as an example here to show the similarity with the Python code
+  self <- NULL
+  # set number of nodes in each input, hidden, output layer
+  # Note that R uses the dollar symbol to place, or usually extract, a single element of a variable
+  self$inodes <- inputnodes
+  self$hnodes <- hiddennodes
+  self$onodes <- outputnodes
+  
+  # Create a randomly initialised matrix. R requires the total number of randomly generated variables, though only one of `matrix' arguments, 'nrow' or 'ncol', needs to be set as the other would be implied.
+  # Also note that 0 and 0.0 (or even 0.) are considered equivalent in R
+  self$wih <- matrix(rnorm(self$hnodes*self$inodes, 0, self$hnodes^(-0.5)), nrow = self$hnodes)
+  self$who <- matrix(rnorm(self$onodes*self$hnodes, 0, self$onodes^(-0.5)), nrow = self$onodes)
+  
+  # learning rate
+  self$lr <- learningrate
+  
+  # activation function is the sigmoid function
+  # As the sigmoid function is not in base R we shall create a function replicating it.
+  # There are several libraries which have this function but we shall shall try to use base R as much as possible.
+  # Also since this function can be written in a single line we can omit the curly braces we usually see with functions
+  self$activation_function <- function(x) return(1/(1 + exp(-x)))
+  
+  # In R at the end of a function simply write the name of the variable that you wish to return. 
+  # We could write return(self), as in Python, though this only tends to be used when, like above, we have a single line function, or when you wish to return a value from the middle of a function.
+  self
+}
+
+```
+
+# Train the neural network
+```{r}
+train <- function(self, inputs_list, targets_list){
+  # convert inputs list to 2d array
+  inputs <- matrix(inputs_list, ncol=1)
+  targets <- matrix(targets_list, ncol=1)
+  
+  # calculate signals into hidden layer
+  # In R matrix multiplication is done by using "%*%"
+  hidden_inputs <- self$wih %*% inputs
+  # calculate the signals emerging from hidden layer
+  hidden_outputs <- self$activation_function(hidden_inputs)
+  # calculate signals into final output layer
+  final_inputs <- self$who %*% hidden_outputs
+
+  # calculate the signals emerging from final output layer
+  final_outputs <- self$activation_function(final_inputs)
+  
+  # output layer error is the (target - actual)
+  output_errors <- targets - final_outputs
+  # hidden layer error is the output_errors, split by weights, recombined at hidden nodes
+  # Note that "t(x)" will transpose the matrix x
+  hidden_errors <- t(self$who) %*% output_errors
+
+  # update the weights for the links between the hidden and￼output layers
+  # Note, there is no addition assigment operator in R
+  self$who <- self$who + self$lr * ((output_errors * final_outputs * (1 - final_outputs)) %*% t(hidden_outputs))
+  # update the weights for the links between the input and hidden layers
+  self$wih <- self$wih + self$lr * ((hidden_errors * hidden_outputs * (1 - hidden_outputs)) %*% t(inputs))
+  
+  # return the updated neural network
+  self
+}
+```
+
+# query the neural network
+```{r}
+query <- function(self, inputs_list){
+  inputs <- matrix(inputs_list, ncol=1)
+  
+  # calculate signals into the hidden layer
+  hidden_inputs <- self$wih %*% inputs
+  # calculate the signal emerging from the hidden layer
+  hidden_outputs <- self$activation_function(hidden_inputs)
+  
+  # calculate signals into final output layer
+  final_inputs <- self$who %*% hidden_outputs
+  # calculate the signals emerging from the final output layer
+  final_outputs <- self$activation_function(final_inputs)
+  
+  final_outputs
+}
+```
+
+
+# Initialise and run the neural network
+```{r}
+# number of input, hidden and output nodes
+input_nodes <- 784
+hidden_nodes <- 200
+output_nodes <- 10
+# learning rate
+learning_rate <- 0.1
+# create instance of neural network
+n <- neuralnetwork(input_nodes, hidden_nodes, output_nodes, learning_rate)
+```
+
+```{r}
+# load the mnist training data CSV file into a list
+training_data_file <- "mnist_dataset/mnist_train.csv"
+training_data_list <- readLines(training_data_file)
+```
+
+```{r}
+# epochs is the number of times the training data set is used for ￼training
+Rprof("test_MYONN_code_compiled")
+epochs <- 1
+for(e in 1:epochs){
+  # go through all records in the training data set
+  for(record in training_data_list){
+    # Split the records by commas, note that we have to have a double square bracket at the end. When using the `strsplit` function, R creates a list (one of the primitive functions in R). To reference the first element we use double square brackets, rather than single square brackets which are used for e.g, vectors, matrices, data frames, etc.
+    # A futher explanation of why `strsplit` returns a list is given at the end of the notebook
+    all_values <- as.integer(strsplit(record, split = ",")[[1]])
+    # There are several "as.***" functions in R which can be used for conversion of one type to another
+    inputs <- (all_values[-1]/255 * 0.99) + 0.01
+    # create the target output values (all 0.01, except the desired label which is 0.99)
+    # Using the `rep` function to replicate elements is probably the easiest one to use here
+    targets <- rep(0.01, output_nodes)
+    # all_values[1] is the target label for this record. Note that we have to add one to the index as we start indexing from 1 in R
+    targets[all_values[1]+1] <- 0.99
+    # Call the train function. Note that here we have to assign the returned values to n
+    # In Python as 'n' would be a class it gets updated within the function, whilst in R it's a variable and so is subject to its lexical scoping rules; so whilst the value of 'n' would be updated in the 'train' function it be lost once we left that function.
+    # One way around this would be to use the global assignment operator "<<-" within the 'train' function whenever we update `self`, though this could be considered bad practice.
+    n <- train(n, inputs, targets)
+  }
+}
+Rprof()
+```
+
+
+```{r}
+# load the mnist test data CSV file into a list
+test_data_file <- "mnist_dataset/mnist_test.csv"
+test_data_list <- readLines(test_data_file)
+```
+
+# Test the neural network
+```{r}
+# scorecard for how well the network performs
+# Usually appending values to a variable in a for loop in R is considered slow and should be discouraged, however we have kept it here as it is siple to read.
+scorecard <- vector()
+```
+
+```{r}
+for (record in test_data_list){
+  all_values <- as.integer(strsplit(record, split = ",")[[1]])
+  # correct answer is the first value
+  correct_label <- as.integer(all_values[1])
+  # scale and shift the inputs
+  inputs <- (all_values[-1]/255 * 0.99) + 0.01
+  # query the network
+  outputs <- query(n, inputs)
+  # the index of the highest value corresponds to the label (subtracting 1)
+  label <- which.max(outputs) - 1
+  # To append in R use the 'c' function (short for concatenate). 
+  # Also we could have used the 'ifelse' function here but readability was considered more important!
+  if (label == correct_label){
+    scorecard <- c(scorecard, 1)
+  } else {
+    scorecard <- c(scorecard, 0)
+  }
+}
+```
+
+```{r}
+sum(scorecard)/length(scorecard)
+```
+
+Short aside about lists in R. 
+```{r}
+
+# As mentioned before, the output from `strsplit` is a list. The reason for this is that the function can be applied to a vector of strings and the output from each string can be of varying length. For example
+s <- c("Here, be dragons", "Alan, Bob, Charlie")
+# The 'c' function combines values into a vector or a list.
+# We can easily apply `strsplit` to each element as follows
+s_split <- strsplit(s, split = ",")
+# However the first string would be split into two elements, ("Here" and "be dragons"), whilst the second element would be split into three elements ("Alan", "Bob" and "Charlie"). The way that R deals with this is to use lists, where each element can be of varying length and different type. 
+# Viewing the split strings, we can see how R deals with these varying length
+s_split
+# To reference each element we use the double square brackets notation, so e.g.
+s_split[[2]]
+# gives us the second element of the list s_split
+# List indexes don't necessarily have to be integers, it is possible to set up strings as indexes, for example
+l <- list()
+l[['first']] <- "1st"
+l[['second']] <- "2nd"
+l
+l[['second']]
+#There is some similarity between lists and Python dictionaries, but we shall leave that to the intrepid coder to discover.
+```
