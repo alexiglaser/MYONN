@@ -1,0 +1,41 @@
+---
+title: "part2_mnist_data_set"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook replicating the Python notebook for Make Your Own Neural Network
+working with the MNIST data set
+
+(c) Alex Glaser, 2017
+license is GPLv2
+
+As a quick aside we shall use the assigment operator "<-" instead of "=" throughout the code. There appears to be some confusion about why this is used instead of equals, which is beyond the scope of this work, simply put most of the time they are interchangeable. The reasons for this code being written with the assigment operator are purely personal.
+
+```{r}
+data_list <- readLines("mnist_dataset/mnist_train_100.csv")
+``` 
+
+```{r}
+length(data_list)
+```
+
+```{r}
+# show the second dataset record, note that R starts counting from 1 not 0.
+# the first number is the label, the rest are pixel colour values (greyscale 0-255)
+data_list[2]
+```
+
+```{r}
+# take the data from a record, rearrange it into a 28*28 array and plot it as an image
+all_values <- unlist(strsplit(data_list[2], ','))
+# Using negative numbers as indexes in R will remove the value being references, e.g. here we are looking at all values except the first one (equivalent to all_values[1:] in Python)
+# As an alternative we could have used all_values[2:len(all_values)], but '-1' is more succinct and more 'Rcentric'
+image_array <- matrix(as.numeric(all_values[-1]), ncol = 28, byrow = T)
+# To plot the number we need to reverse the order of the image_array, since the element in the first row and first column will be plotted in the bottom left of the plot.
+# There are several ways of reversing the order, but we'll make use of R's "apply" function. This will apply a function to either the rows or columns of the matrix (or array). Here we are reversing the order of each column in `image_array` (if the second argument were 1 then we would be applying the function to the rows of the matrix). 
+image_array <- apply(image_array, 2, rev)
+# The 'apply' suite of functions are very commonly used in R. They are not just used for matrices and data frames, "lapply" and "sapply" can be used on lists (a common R data structure).
+image(t(image_array), col=gray((255:0)/255))
+```
