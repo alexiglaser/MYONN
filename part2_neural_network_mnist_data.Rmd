@@ -122,7 +122,7 @@ training_data_list <- readLines(training_data_file)
 ```{r}
 # epochs is the number of times the training data set is used for ￼training
 Rprof("test_MYONN_code_compiled")
-epochs <- 1
+epochs <- 5
 for(e in 1:epochs){
   # go through all records in the training data set
   for(record in training_data_list){
