@@ -29,6 +29,7 @@ data_list[2]
 
 ```{r}
 # take the data from a record, rearrange it into a 28*28 array and plot it as an image
+# splitting a string in R results in a list, though we can use the `unlist` command to convert it to a vector. More about lists can be found on part2_neural_network_mnist_data.Rmd notebook
 all_values <- unlist(strsplit(data_list[2], ','))
 # Using negative numbers as indexes in R will remove the value being references, e.g. here we are looking at all values except the first one (equivalent to all_values[1:] in Python)
 # As an alternative we could have used all_values[2:len(all_values)], but '-1' is more succinct and more 'Rcentric'
