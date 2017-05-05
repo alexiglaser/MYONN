@@ -11,5 +11,5 @@ The notebooks ("part2_mnist_data_set.Rmd" and "part2_neural_network_mnist_data.R
 
 An initial concern is that the R code is about twice as slow as Python code. Further profiling of the code shows that it is the last matrix multiplication of the `train` function that is taken up a huge period of time, roughly 80%. The code finds the outer product of two vectors; byte compilation, using C++ code or `tcrossprod` didn't quicken the code. Two main resons come to mind:
 
-1) R numbers are float64 so will be slower than Python and Julia's float32s
+1) R numbers are float64 so will be slower than Python and Julia matrices which can be set to float32
 2) The garbage collection done at the end of a for loop in R will slow things down.
