@@ -1,5 +1,9 @@
-# MYONN
-R translations of Python code in the book "Make your own neural network"
+# PyData London 2017
+Code used in my PyData London 2017, 'Journeys through JuPyteR'
+
+We have the R, Python and Julia implementations of a simulation answer to this 538 riddler [problem](https://fivethirtyeight.com/features/can-you-deal-with-these-card-game-puzzles/)
+
+There are also R and Julia translations of Python code in the book "Make your own neural network"
 
 Many thanks to Tariq Rashid for writing this book (available [here](https://www.amazon.co.uk/Make-Your-Own-Neural-Network/dp/1530826608/ref=la_B01N1YH9L9_1_1?s=books&ie=UTF8&qid=1488134452&sr=1-1))
 
