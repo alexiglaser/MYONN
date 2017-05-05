@@ -1,5 +1,5 @@
 # PyData London 2017
-Code used in my PyData London 2017, 'Journeys through JuPyteR'
+Code used in my PyData London 2017 presentation 'Journeys through JuPyteR'
 
 We have the R, Python and Julia implementations of a simulation answer to this 538 riddler [problem](https://fivethirtyeight.com/features/can-you-deal-with-these-card-game-puzzles/)
 
